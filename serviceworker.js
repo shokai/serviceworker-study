@@ -1,9 +1,9 @@
 console.log('start')
 
-addEventListener('install', e => {
+self.addEventListener('install', event => {
   console.log('installed')
   console.log('setup cache')
-  e.waitUntil(() => caches.open('v1').then(cache => cache.addAll([
+  event.waitUntil(() => self.caches.open('v1').then(cache => cache.addAll([
     '/',
     '/index.html',
     '/index.js',
@@ -12,20 +12,20 @@ addEventListener('install', e => {
   ])))
 })
 
-addEventListener('fetch', e => {
-  console.log(e)
+self.addEventListener('fetch', event => {
+  console.log(event)
+  const {request} = event
 
-  return e.respondWith(caches.match(e.request).then(cacheResult => {
-    if (cacheResult !== undefined) {
-      console.log('cache hit', e)
-      return cacheResult
+  event.respondWith((async () => {
+    const cachedResponse = await self.caches.match(request)
+    if (cachedResponse) {
+      console.log('cache hit!', request.url)
+      return cachedResponse
     }
-    return fetch(e.request).then(fetchResult => {
-      const fetchResultClone = fetchResult.clone()
-      caches.open('v1').then(cache => {
-        cache.put(e.request, fetchResultClone)
-      })
-      return fetchResult
-    })
-  }))
+
+    const response = await self.fetch(request)
+    const cache = await self.caches.open('v1')
+    cache.put(request, response)
+    return response
+  })())
 })
