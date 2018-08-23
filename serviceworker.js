@@ -15,6 +15,7 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   console.log(event)
   const {request} = event
+  if (request.method !== 'GET') return
 
   event.respondWith((async () => {
     const cachedResponse = await self.caches.match(request)
